@@ -1,0 +1,123 @@
+<% include ../header.ejs %>
+
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+ <% include ./nav.ejs %>
+ <% include ./outside.ejs %>
+ 
+  <div class="layui-body">
+    <!-- 内容主体区域 -->
+    <div style="padding: 15px;">
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+    <legend>任务发布</legend>
+    </fieldset>
+  <form class="layui-form" action="">
+  <div class="layui-form-item">
+    <label class="layui-form-label">任务标题</label>
+    <div class="layui-input-block">
+      <input type="text" name="title" required  lay-verify="required" placeholder="请输入任务标题" autocomplete="off" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">任务奖励</label>
+    <div class="layui-input-block">
+      <input type="text" name="reward" required lay-verify="required" placeholder="请输入任务奖励" autocomplete="off" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">任务难度</label>
+    <div class="layui-input-block">
+     <div id="test1" name='difficulty'></div>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">接取人数</label>
+    <div class="layui-input-inline">
+      <input type="number" name="num"  class="layui-input" lay-verify="required">
+    </div>
+    <div class="layui-form-mid layui-word-aux">接取任务的人数限制</div>
+  </div>
+  <div  name='time' style="display: none;">222</div>
+   <div class="layui-form-item">
+    <label class="layui-form-label">截止日期</label>
+    <div class="layui-input-inline">
+     <input lay-verify="required" type="text" class="layui-input" id="test2" name='expiration'  placeholder="yyyy-MM-dd HH:mm:ss">
+    </div>
+    <div class="layui-form-mid layui-word-aux">接取任务截止日期</div>
+  </div>
+  <div class="layui-form-item layui-form-text">
+  <label class="layui-form-label">任务内容</label>
+    <div class="layui-input-block">
+      <textarea id="demo"  name='content' style="display: none;" ></textarea>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <div class="layui-input-block">
+      <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+      <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+    </div>
+  </div>
+</form>
+    </div>
+  </div>
+  
+  <div class="layui-footer">
+   页面底部
+  </div>
+</div>
+<script>
+//JavaScript代码区域
+layui.use(['element','form','layer','rate','laydate','layedit'], function(){
+  var element = layui.element;
+  var form = layui.form;
+  var $ = layui.$;
+  var rate = layui.rate;
+  var laydate = layui.laydate;
+  var layedit = layui.layedit;
+  var pingfen;
+  var  datee = new Date().toLocaleString();
+   rate.render({
+    elem: '#test1',
+    value:2, 
+    text:true,
+    choose:(value)=>{
+        pingfen = value
+    }
+  })
+   laydate.render({
+    elem: '#test2'
+    ,type: 'datetime'
+  });
+  var edit =  layedit.build('demo',{
+    uploadImage: {url: '/api/upload', type: 'post'} //图片上传
+  }); //建立编辑器
+  
+   //监听提交
+  form.on('submit(formDemo)', function(data){
+      var da = data.field;
+      da.difficulty = pingfen;
+     // da.time = datee;
+      da.content = layedit.getContent(edit);
+      //console.log(da)
+
+      $.ajax({
+         url:'/admin/task/add',
+         method:'post',
+         data:da,
+         success:(data)=>{
+           if (data.code == 0) {
+               layer.msg(data.data)
+               setTimeout(() => {
+                window.location.reload() 
+               }, 1500);
+           }
+         }
+      })
+    return false;
+  });
+  
+  
+});
+</script>
+</body>
+</html>

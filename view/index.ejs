@@ -1,0 +1,123 @@
+<% include header.ejs %>
+<body>
+<div class="layui-bg-blue">
+    <div class="layui-header layui-main">
+        <ul class="layui-nav layui-bg-blue">
+            <li class="layui-nav-item layui-this"><a href="/">任务大厅</a></li>
+        </ul>
+        <ul class="layui-nav layui-bg-blue layui-layout-right ">
+            <% if (login){ %>
+                <li class="layui-nav-item">当前用户: <%- user.username %></li>
+                <% if (user.level >= 10) { %>
+                    <li class="layui-nav-item"><a href="/admin/task/add">后台管理</a></li>
+                <% } %>
+                <li class="layui-nav-item"><a href="/logout">退出</a></li>
+            <% } else { %>
+            <li class="layui-nav-item"><a href="/login">登陆</a></li>
+            <li class="layui-nav-item"><a href="/reg">注册</a></li>
+            <% } %>
+        </ul>
+    </div>
+</div>
+<div class='layui-main'>
+<div id='buts' style='margin-top:10px;'>
+  <button class="layui-btn layui-btn-normal" data-dachui="all">全部任务</button>
+    <button class="layui-btn layui-btn-normal" data-dachui="can">可以接取任务</button>
+    <button class="layui-btn layui-btn-normal" data-dachui="notcan">不可接取任务</button>
+
+     <div style="float: right;">
+        <% if (login) { %>
+            <% if (user.level >= 10){ %>
+                <button class="layui-btn layui-btn-normal" data-dachui="my">我的发布</button>
+            <% } %>
+            <button class="layui-btn layui-btn-normal" data-dachui="receive">已经接取</button>
+            <button class="layui-btn layui-btn-normal" data-dachui="finish">已经完成</button>
+        <% } %>
+    </div>
+</div>
+<div>
+<div class='layui-main'>
+<table class="layui-hide" id="test1" lay-filter='demo'></table>
+<script type='text/html' id='detail'>
+   <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="del">查看详情</a>
+</script>
+</div>
+
+
+<script>
+  //注意：导航 依赖 element 模块，否则无法进行功能性操作
+  layui.use(['element','table'], function(){
+    var element = layui.element;
+    var table = layui.table;
+    var $ = layui.$;
+
+    var method = {
+        all:()=>{
+           table.reload('test1',{
+               url:'/api/task/manage'
+           })  
+        },
+         can:()=>{
+           table.reload('test1',{
+               url:'/api/task/can'
+           })  
+        },
+         notcan:()=>{
+           table.reload('test1',{
+               url:'/api/task/notcan'
+           })  
+        },
+        my:()=>{
+            table.reload('test1',{
+               url:'/api/task/my'
+           })  
+        },
+        receive:()=>{
+            table.reload('test1',{
+               url:'/api/task/receive'
+           })  
+        },
+        finish:()=>{
+            table.reload('test1',{
+               url:'/api/task/finish'
+           })  
+        }
+    }
+
+
+    $('#buts .layui-btn').on('click',function() {
+       method[this.dataset.dachui]()
+     // console.log(this.dataset.dachui);
+     })
+  
+    table.render({
+      elem:'#test1',
+      url:'/api/task/manage',
+      method:'post',
+      cols:[
+          [
+        {field: 'title', title: '任务标题'},
+        // {field:'author',title:'作者',templet:(d)=>{
+        //   return d.author.username;
+        // }},
+        {field:'time',title:'发布时间',templet:(d)=>{
+         return new Date(d.time).toLocaleString();
+        }},
+        {field:'expiration',title:'任务截止日期'},
+        {field:'reward',title:'任务奖励'},
+        {field:'num',title:'接取人数限制'},
+        {field:'tool',toolbar:'#detail' , title: '查看详情',}
+        ]
+    ]
+     ,page: true
+  })
+
+  table.on('tool(demo)',(obj)=>{
+   location.href = '/task/'+obj.data._id
+  })
+
+  });
+</script>
+
+</body>
+</html>

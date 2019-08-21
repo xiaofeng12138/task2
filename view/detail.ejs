@@ -1,0 +1,152 @@
+<% include header.ejs %>
+<body>
+<div class="layui-bg-blue">
+    <div class="layui-header layui-main">
+        <ul class="layui-nav layui-bg-blue">
+            <li class="layui-nav-item layui-this"><a href="/">任务大厅</a></li>
+        </ul>
+        <ul class="layui-nav layui-bg-blue layui-layout-right ">
+            <% if (login){ %>
+                <li class="layui-nav-item">当前用户: <%- user.username %></li>
+                <% if (user.level >= 10) { %>
+                    <li class="layui-nav-item"><a href="/admin/task/add">后台管理</a></li>
+                <% } %>
+                <li class="layui-nav-item"><a href="/logout">退出</a></li>
+            <% } else { %>
+            <li class="layui-nav-item"><a href="/login">登陆</a></li>
+            <li class="layui-nav-item"><a href="/reg">注册</a></li>
+            <% } %>
+        </ul>
+    </div>
+</div>
+<div class='layui-main'>
+ <h1 style='margin:20px'><%- data.title %></h1>
+  <div class='layui-row' style='margin-left:10px'>
+    <div class='layui-col-md2'>
+      <h2>
+       发布人：<%- data.author.username%>
+      </h2>
+    </div>
+     <div class='layui-col-md4'>
+        <h2>
+        发布时间：<%- new Date(data.time).toLocaleString()%>
+        </h2>
+    </div>
+     <div class='layui-col-md4'>
+        <h2>
+        任务奖励：<%- data.reward%>
+        </h2>
+    </div>
+  </div>
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+    <legend>任务详情</legend>
+    </fieldset>
+    <div>
+     <h2> <%- data.content %></h2>
+    </div>
+    <div style="margin-top: 30px;">
+        <h2>
+            已接取人数 <span style='color:red'><%- data.receiver.length%></span> 人;&nbsp&nbsp&nbsp
+            最高接取人数 <span style='color:red'><%- data.num %> </span>人;&nbsp&nbsp&nbsp
+            任务时限： <span style='color:red'><%-data.expiration %> </span>之前完成;&nbsp&nbsp&nbsp
+            任务难度：<div id='diff'></div>
+        </h2>
+    </div>
+    <div>
+       <% if (data.can || !(a === -1) ) { %>
+      <button class='layui-btn layui-btn-normal layui-btn-disabled'>不能接取</button>
+       <%} else {%>
+        <button class='layui-btn layui-btn-normal' id='get'>立即接取</button>
+       <%} %>
+    <div>
+     <div>
+      <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+    <legend>接取人</legend>
+    </fieldset>
+
+    <div>
+        <% for (var i = 0; i < data.receiver.length; i++) { %>
+        <%- ` ${i+1}. ${data.receiver[i].user.username}` %>
+        <% } %>
+    </div>
+  </div>
+   <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+      <legend>任务完成详情</legend>
+   </fieldset>
+    <%  for(var i =0;i< data.receiver.length;i++) {%>
+        <div class='layui-card-header'>用户名：<%- data.receiver[i].user.username%></div>
+        <% if(data.receiver[i].finmsg) {%>
+        <div class='layui-card-body'>完成时间：<%- new Date(data.receiver[i].fintime).toLocaleString() %></div>
+        <div class='layui-card-body'>完成详情：<%- data.receiver[i].msg %></div>
+         <hr/>
+        <%} else {%>
+          <% if(user && user._id == data.receiver[i].user._id){%>
+           <form class="layui-form" action="" style='width:600px;'>
+           <input name='id' hidden  value= "<%- data.receiver[i].user._id %>">
+           <input name='index' hidden  value= "<%- i %>">
+           任务评价：<textarea id="demo<%- i %>" style="display: none;" required ></textarea>
+          <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+           </form>
+           <%}%>
+        <%}%>
+    <%}%>
+
+</div>
+<script>
+layui.use(['rate','layer','layedit','form'],()=>{
+  let rate = layui.rate;
+  let layedit = layui.layedit;
+  let $ = layui.$;
+  let form = layui.form;
+  let edit ={};
+
+   <%  for(var i =0;i< data.receiver.length;i++) {%>
+   edit.index<%-i%> =  layedit.build('demo<%- i %>'); //建立编辑器
+   <%}%>
+
+  form.on('submit(formDemo)', function(data){
+    var da = data.field;
+    da.msg =  layedit.getContent(edit['index' + data.field.index ])
+    let url1 = location.pathname.slice(6)
+    da.taskid = url1;
+    if(da.msg.trim().length == 0){
+      layer.alert('请填写任务完成说明后再提交')
+    }else{
+      $.ajax({
+        url:'/taskk/finishmsg',
+        method:'post',
+        data:da,
+       success:(data1)=>{
+           if (data1.code == 0) {
+               layer.msg(data1.msg)
+               setTimeout(() => {
+                window.location.reload() 
+               }, 1500);
+           }
+         }
+      })
+    }
+  });
+
+
+ rate.render({
+     elem:'#diff',
+     value:<%-data.difficulty %>,
+     readonly:true
+ })
+  $('#get').on('click',()=>{
+    $.ajax({
+        url:location.pathname,
+        method:'post',
+        success:(data)=>{
+            layer.msg(data.msg)
+             setTimeout(() => {
+                window.location.reload() 
+               }, 1500);
+        }
+    })
+  })
+})
+</script>
+</body>
+</html>
